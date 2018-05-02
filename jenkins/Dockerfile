@@ -1,0 +1,38 @@
+# ---------------------------------------------------------
+# Dockerfile: jenkins
+# ---------------------------------------------------------
+FROM jenkins/jenkins:lts
+LABEL maintainer "tefuna <tefuna@gmail.com>"
+
+USER root
+
+# install docker.
+RUN apt-get update \ 
+    && apt-get install -y make sudo \
+    && apt-get autoclean \
+    && apt-get clean \
+    && apt-get autoremove
+RUN curl -fsSL https://get.docker.com/ | sh
+RUN curl -L https://github.com/docker/compose/releases/download/1.7.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+RUN chmod +x /usr/local/bin/docker-compose
+
+# install jenkins plugins.
+#   list plugins:version cmd.
+#   curl -sSL "http://$JENKINS_HOST/pluginManager/api/xml?depth=1&xpath=/*/*/shortName|/*/*/version&wrapper=plugins" | perl -pe 's/.*?<shortName>([\w-]+).*?<version>([^<]+)()(<\/\w+>)+/\1 \2\n/g'|sed 's/ /:/'
+COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
+RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
+
+# mkdir arrtifacts and jenkins user home.
+RUN mkdir -p /var/artifacts && chmod -R 777 /var/artifacts
+# RUN mkdir -p /var/home && chmod -R 777 /var/home
+
+# change jenkins user.
+RUN echo jenkins:jenkins | chpasswd \
+    && gpasswd -a jenkins sudo \
+    && usermod -aG dockerroot jenkins
+#    && usermod -d /var/home jenkins
+
+# timezone.
+ENV TZ='Asia/Tokyo'
+
+USER jenkins

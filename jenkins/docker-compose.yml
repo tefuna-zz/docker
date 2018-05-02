@@ -1,0 +1,20 @@
+# ---------------------------------------------------------
+# docker-compose: jenkins
+# ---------------------------------------------------------
+version: "2"
+
+services:
+    master:
+      build: .
+      ports:
+        - "9090:8080"
+      volumes:
+        - "/data/jenkins_home:/var/jenkins_home"
+        - "/data/artifacts:/var/artifacts"
+      environment:
+        JENKINS_HOME: /var/jenkins_home
+        JAVA_OPTS: -Xms1024m -Xmx1024m -Duser.timezone=Asia/Tokyo -Dfile.encoding=UTF-8
+      tty: true
+      stdin_open: true
+      privileged: true
+      restart: always
